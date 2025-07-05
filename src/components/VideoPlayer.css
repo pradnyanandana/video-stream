@@ -1,0 +1,47 @@
+.multi-cam-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+}
+
+.video-player {
+    flex: 1 1 45%;
+    max-width: 48%;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.video-player.zoomed {
+    flex: 1 1 100%;
+    max-width: 100%;
+    z-index: 10;
+    position: relative;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+.control-button {
+    background: #333;
+    border: none;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.video-canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.hidden {
+    display: none;
+}
