@@ -1,13 +1,12 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import VideoPlayer from "./components/VideoPlayer";
-import type { VideoPlayerHandle } from "./components/VideoPlayer";
 import { FaPlay, FaPause } from "react-icons/fa";
-import './App.css'
+import "./App.css";
 
 const App: React.FC = () => {
   const [videoUrls, setVideoUrls] = useState<string[]>([]);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const playerRefs = useRef<React.RefObject<VideoPlayerHandle | null>[]>([]);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [playAudioId, setPlayAudioId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -23,17 +22,7 @@ const App: React.FC = () => {
     fetchVideos();
   }, []);
 
-  // Setup refs for all players
-  useEffect(() => {
-    playerRefs.current = videoUrls.map(() => React.createRef());
-  }, [videoUrls]);
-
   const togglePlayAll = () => {
-    if (isPlaying) {
-      playerRefs.current.forEach((ref) => ref.current?.pause());
-    } else {
-      playerRefs.current.forEach((ref) => ref.current?.play());
-    }
     setIsPlaying(!isPlaying);
   };
 
@@ -52,9 +41,11 @@ const App: React.FC = () => {
         {videoUrls.map((url, index) => (
           <VideoPlayer
             key={index}
-            ref={playerRefs.current[index]}
             cameraId={index + 1}
             videoUrl={url}
+            isPlaying={isPlaying}
+            playAudioId={playAudioId}
+            setPlayAudioId={setPlayAudioId}
           />
         ))}
       </div>

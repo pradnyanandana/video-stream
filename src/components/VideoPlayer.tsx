@@ -1,165 +1,174 @@
+import { useRef, useState, useEffect } from "react";
 import {
-  useRef,
-  useState,
-  useEffect,
-  forwardRef,
-  useImperativeHandle,
-} from "react";
+  FaVolumeMute,
+  FaVolumeUp,
+  FaSearchPlus,
+  FaSearchMinus,
+} from "react-icons/fa";
 import "./VideoPlayer.css";
 
 interface VideoPlayerProps {
   cameraId: number;
   videoUrl: string;
+  isPlaying: boolean;
+  setPlayAudioId: React.Dispatch<React.SetStateAction<number | null>>;
+  playAudioId: number | null;
 }
 
-export interface VideoPlayerHandle {
-  play: () => void;
-  pause: () => void;
-}
+const VideoPlayer: React.FC<VideoPlayerProps> = ({
+  cameraId,
+  videoUrl,
+  isPlaying,
+  playAudioId,
+  setPlayAudioId,
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
-  ({ cameraId, videoUrl }, ref) => {
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isMuted, setIsMuted] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [isZoomed, setIsZoomed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
 
-    const containerRef = useRef<HTMLDivElement>(null);
-    const drawFrameRef = useRef<(() => void) | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const drawFrameRef = useRef<(() => void) | null>(null);
 
-    useImperativeHandle(ref, () => ({
-      play: () => {
-        const video = videoRef.current;
-        if (!video) return;
-        video
-          .play()
-          .then(() => {
-            drawFrameRef.current?.();
-          })
-          .catch((err) => {
-            console.error(`Camera ${cameraId} play() failed`, err);
-          });
-      },
-      pause: () => {
-        videoRef.current?.pause();
-      },
-    }));
+  const isMuted = cameraId !== playAudioId;
 
-    useEffect(() => {
+  useEffect(() => {
+    if (isPlaying) {
       const video = videoRef.current;
-      const canvas = canvasRef.current;
-      if (!video || !canvas) return;
+      if (!video) return;
+      video
+        .play()
+        .then(() => {
+          drawFrameRef.current?.();
+        })
+        .catch((err) => {
+          console.error(`Camera ${cameraId} play() failed`, err);
+        });
+    } else {
+      videoRef.current?.pause();
+    }
+  }, [isPlaying, cameraId]);
 
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+  useEffect(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
 
-      const drawFrame = () => {
-        if (video.paused || video.ended) return;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-        ctx.font = "10vw Arial";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-        ctx.fillText(`Camera ${cameraId}`, 50, 200);
-        ctx.fillText(
-          new Date(video.currentTime * 1000).toISOString().substr(11, 8),
-          canvas.width - 800,
-          200
-        );
+    const drawFrame = () => {
+      if (video.paused || video.ended) return;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        requestAnimationFrame(drawFrame);
-      };
+      ctx.font = "10vw Arial";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+      ctx.fillText(`Camera ${cameraId}`, 50, 200);
+      ctx.fillText(
+        new Date(video.currentTime * 1000).toISOString().substr(11, 8),
+        canvas.width - (700 / 1280) * 1000,
+        200
+      );
 
-      drawFrameRef.current = drawFrame;
-
-      const handleLoadedData = () => {
-        setIsLoading(false);
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        setIsMuted(video.muted);
-        drawFrame();
-      };
-
-      const handleError = () => {
-        setIsLoading(false);
-        setError("Failed to load video");
-      };
-
-      video.addEventListener("loadeddata", handleLoadedData);
-      video.addEventListener("error", handleError);
-
-      return () => {
-        video.removeEventListener("loadeddata", handleLoadedData);
-        video.removeEventListener("error", handleError);
-      };
-    }, [cameraId]);
-
-    useEffect(() => {
-      containerRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, [isZoomed]);
-
-    const toggleMute = () => {
-      const video = videoRef.current;
-      if (video) {
-        const newMuted = !video.muted;
-        video.muted = newMuted;
-        setIsMuted(newMuted);
-      }
+      requestAnimationFrame(drawFrame);
     };
 
-    const toggleZoom = () => {
-      setIsZoomed((prev) => !prev);
+    drawFrameRef.current = drawFrame;
+
+    const handleLoadedData = () => {
+      setIsLoading(false);
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
     };
 
-    return (
-      <div className={`video-player ${isZoomed ? "zoomed" : ""}`} ref={containerRef}>
-        <div className="video-container">
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            className="hidden"
-            preload="auto"
-            loop
-            muted
-          />
-          <canvas ref={canvasRef} className="video-canvas" />
-          {isLoading && (
-            <div className="loading-overlay">
-              <div className="spinner"></div>
-            </div>
-          )}
-          {error && (
-            <div className="error-overlay">
-              <div className="error-message">
-                <p>{error}</p>
-              </div>
-            </div>
-          )}
-        </div>
+    const handlePlaying = () => {
+      drawFrame();
+    };
 
-        <div className="controls">
-          <button
-            onClick={toggleMute}
-            className="control-button"
-            aria-label={isMuted ? "Unmute" : "Mute"}
-          >
-            {isMuted ? "🔈" : "🔇"}
-          </button>
-          <button
-            onClick={toggleZoom}
-            className="control-button"
-            aria-label={isZoomed ? "Zoom out" : "Zoom in"}
-          >
-            {isZoomed ? "🔽" : "🔍"}
-          </button>
-        </div>
+    const handleError = () => {
+      setIsLoading(false);
+      setError("Failed to load video");
+    };
+
+    video.addEventListener("loadeddata", handleLoadedData);
+    video.addEventListener("playing", handlePlaying);
+    video.addEventListener("error", handleError);
+
+    return () => {
+      video.removeEventListener("loadeddata", handleLoadedData);
+      video.removeEventListener("playing", handlePlaying);
+      video.removeEventListener("error", handleError);
+    };
+  }, [cameraId]);
+
+  useEffect(() => {
+    containerRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [isZoomed]);
+
+  const toggleMute = () => {
+    if (isMuted) {
+      setPlayAudioId(cameraId);
+    } else {
+      setPlayAudioId(null);
+    }
+  };
+
+  const toggleZoom = () => {
+    setIsZoomed((prev) => !prev);
+  };
+
+  return (
+    <div
+      className={`video-player ${isZoomed ? "zoomed" : ""}`}
+      ref={containerRef}
+    >
+      <div className="video-container">
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          className="hidden"
+          preload="auto"
+          loop
+          muted={cameraId !== playAudioId}
+        />
+        <canvas ref={canvasRef} className="video-canvas" />
+        {isLoading && (
+          <div className="loading-overlay">
+            <div className="spinner"></div>
+          </div>
+        )}
+        {error && (
+          <div className="error-overlay">
+            <div className="error-message">
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
       </div>
-    );
-  }
-);
+
+      <div className="controls">
+        <button
+          onClick={toggleMute}
+          className="control-button"
+          aria-label={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
+        </button>
+        <button
+          onClick={toggleZoom}
+          className="control-button"
+          aria-label={isZoomed ? "Zoom out" : "Zoom in"}
+        >
+          {isZoomed ? <FaSearchMinus /> : <FaSearchPlus />}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default VideoPlayer;
