@@ -5,6 +5,10 @@
     justify-content: center;
 }
 
+.video-container {
+    position: relative;
+}
+
 .video-player {
     flex: 1 1 45%;
     max-width: 48%;
@@ -41,6 +45,8 @@
 }
 
 .controls {
+    font-size: 16px;
+    font-family: Arial, Helvetica, sans-serif;
     display: flex;
     gap: 10px;
     justify-content: center;
@@ -63,4 +69,57 @@
 
 .hidden {
     display: none;
+}
+
+.seek-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 0 1rem;
+    color: white;
+}
+
+.seek-bar input[type="range"] {
+    flex: 1;
+    height: 4px;
+    background: #444;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.error-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.error-message {
+    color: #fff;
+}
+
+@media (max-width: 600px) {
+    .controls {
+        gap: 2px;
+        font-size: 11px;
+    }
+
+    .video-player {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+
+    .control-button {
+        padding: 4px;
+    }
+
+    .control-button svg {
+        height: 0.75em;
+        width: 0.75em;
+    }
+
+    .seek-bar {
+        padding: 0 0.5rem;
+    }
 }
