@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import VideoPlayer from "./components/VideoPlayer";
 import "./App.css";
 
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
 const App: React.FC = () => {
   const [videoUrls, setVideoUrls] = useState<string[]>([]);
   const [playAudioId, setPlayAudioId] = useState<number | null>(null);
@@ -9,9 +11,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/video-urls`
-        );
+        const response = await fetch(`${baseUrl}/video-urls`);
         const data = await response.json();
         setVideoUrls(data.map((v: { url: string }) => v.url));
       } catch (error) {
